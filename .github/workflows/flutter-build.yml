@@ -1,4 +1,4 @@
-name: Build Flutter APK
+name: Build and Release Flutter APK
 
 on:
   push:
@@ -8,35 +8,60 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Required for pushing tags and creating releases
     permissions:
-      contents: write  # 👈 this is critical for creating releases
+      contents: write
+      actions: read
 
     steps:
+      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
+      # Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
+      # Build release APK
       - name: Build release APK
         run: flutter build apk --release
 
+      # Upload artifact for reference
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
+      # Auto-increment release tag (v1 → v2 → v3)
+      - name: Get next release tag
+        id: tag
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          # Get latest tag, default to v0 if none
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0")
+          echo "Latest tag: $latest_tag"
+          # Extract numeric part and increment
+          latest_num=${latest_tag#v}
+          next_num=$((latest_num + 1))
+          next_tag="v${next_num}"
+          echo "Next tag: $next_tag"
+          echo "tag=$next_tag" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1
-          name: Build 1
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Build ${{ steps.tag.outputs.tag }}
           files: build/app/outputs/flutter-apk/app-release.apk
+          token: ${{ secrets.GITHUB_TOKEN }} 
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
