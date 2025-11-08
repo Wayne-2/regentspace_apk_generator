@@ -65,7 +65,7 @@ class _BottomNavState extends State<BottomNav> {
       extendBody: true,
       body: pages[currentTabIndex],
       bottomNavigationBar: Container(
-        height: 80,
+        height: 70,
         decoration: BoxDecoration(
           color: Colors.white, // rounded corners
         ),
@@ -100,7 +100,7 @@ class _BottomNavState extends State<BottomNav> {
           children: [
             Icon(
               icon,
-              size: isSelected ? 28 : 24,
+              size: isSelected ? 24 : 22,
               color: isSelected ? widget.primaryapptheme : Colors.grey,
             ),
             const SizedBox(height: 4),

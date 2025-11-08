@@ -37,6 +37,7 @@ dependencies:
   lucide_icons: ^0.257.0
   google_fonts: ^6.3.2
   carousel_slider: ^5.1.1
+  http: ^1.5.0
 
 dev_dependencies:
   flutter_test:

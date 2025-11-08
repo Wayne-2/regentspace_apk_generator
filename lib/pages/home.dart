@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vtutemplate/components/icontabs.dart';
+import 'package:vtutemplate/utils/buyairtime.dart';
+import 'package:vtutemplate/utils/buydata.dart';
+import 'package:vtutemplate/utils/electricalbill.dart';
 
 class Home extends StatelessWidget {
   Home({
@@ -17,7 +20,6 @@ class Home extends StatelessWidget {
   final Color bgColor;
   final Color iconthemeColor;
   final String selectedBgImagePath;
-
 
   final List<String> images = ['assets/ads3.png', 'assets/ads4.png'];
 
@@ -58,7 +60,9 @@ class Home extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: Colors.black, width: 1),
@@ -66,8 +70,11 @@ class Home extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.add_circle,
-                                size: 14, color: iconthemeColor),
+                            Icon(
+                              Icons.add_circle,
+                              size: 14,
+                              color: iconthemeColor,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               "Add Money",
@@ -140,7 +147,8 @@ class Home extends StatelessWidget {
                           GestureDetector(
                             onTap: () {
                               Clipboard.setData(
-                                  const ClipboardData(text: "1100336447"));
+                                const ClipboardData(text: "1100336447"),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Account number copied!'),
@@ -150,8 +158,11 @@ class Home extends StatelessWidget {
                             },
                             child: Row(
                               children: [
-                                const Icon(Icons.copy,
-                                    size: 14, color: Colors.white),
+                                const Icon(
+                                  Icons.copy,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                                 const SizedBox(width: 3),
                                 Text(
                                   "1100336447",
@@ -186,88 +197,111 @@ class Home extends StatelessWidget {
                 crossAxisCount: 4,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 0.8,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 4,
+                childAspectRatio: 1, // make each tile more square-like
+                padding: EdgeInsets.zero, // remove extra padding
                 children: [
                   Icontabs(
                     icon: Icons.phone_android,
                     color: iconthemeColor,
                     label: 'Airtime',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AirtimePage()),
+                      );
+                    },
                   ),
                   Icontabs(
                     icon: Icons.wifi,
                     color: iconthemeColor,
                     label: 'Data',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => DataPage()),
+                      );
+                    },
                   ),
                   Icontabs(
                     icon: Icons.bolt,
                     color: iconthemeColor,
                     label: 'Electric',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ElectricityPage()),
+                      );
+                    },
                   ),
                   Icontabs(
                     icon: Icons.tv,
                     color: iconthemeColor,
                     label: 'Cable',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {},
                   ),
                   Icontabs(
                     icon: Icons.sports_soccer,
                     color: iconthemeColor,
                     label: 'Betting',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {},
                   ),
                   Icontabs(
                     icon: Icons.flight,
                     color: iconthemeColor,
                     label: 'Flight',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {},
                   ),
                   Icontabs(
                     icon: Icons.shopping_cart,
                     color: iconthemeColor,
                     label: 'Shop',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {},
                   ),
                   Icontabs(
                     icon: Icons.generating_tokens,
                     color: iconthemeColor,
                     label: 'Results',
                     themecolor: primaryapptheme,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     iconsize: 18,
+                    onTap: () {},
                   ),
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-              /// --- Ads Section ---
               Text(
                 "Advertisements",
                 style: GoogleFonts.poppins(
@@ -297,12 +331,10 @@ class Home extends StatelessWidget {
                   );
                 }).toList(),
               ),
-              
             ],
           ),
         ),
       ),
     );
   }
-
 }

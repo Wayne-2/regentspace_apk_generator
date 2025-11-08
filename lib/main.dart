@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vtutemplate/auth/signin.dart';
 import 'package:vtutemplate/components/navigator.dart';
 import 'package:vtutemplate/constants.dart';
 
@@ -40,18 +41,9 @@ class _LoadingPageState extends State<LoadingPage>
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 6), () {
-      // ignore: use_build_context_synchronously
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => BottomNav(
-            appNameColor: CanvasConfig.appNameColor,
-            primaryapptheme: CanvasConfig.primaryAppTheme,
-            iconthemeColor: CanvasConfig.iconThemeColor,
-            selectedBgImagePath: CanvasConfig.selectedBgImagePath,
-            bgColor: CanvasConfig.bgColor,
-          ),
-        ),
+        MaterialPageRoute(builder: (context) => SignInPage()),
       );
     });
   }
@@ -68,9 +60,7 @@ class _LoadingPageState extends State<LoadingPage>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          color: CanvasConfig.bgColor,
-        ),
+        decoration: const BoxDecoration(color: CanvasConfig.bgColor),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
@@ -87,7 +77,7 @@ class _LoadingPageState extends State<LoadingPage>
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
-                  color: CanvasConfig.appNameColor
+                  color: CanvasConfig.appNameColor,
                 ),
               ),
 

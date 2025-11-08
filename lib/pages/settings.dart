@@ -32,12 +32,6 @@ class Settings extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _buildOption(
-                title: 'Linked Accounts',
-                asset: 'assets/images/linkedacct.png',
-                onTap: () {},
-              ),
-              const SizedBox(height: 10),
-              _buildOption(
                 title: 'Referrals',
                 asset: 'assets/images/referrals.png',
                 onTap: () {},
@@ -52,12 +46,6 @@ class Settings extends StatelessWidget {
               _buildOption(
                 title: 'About Us',
                 asset: 'assets/images/aboutus.png',
-                onTap: () {},
-              ),
-              const SizedBox(height: 10),
-              _buildOption(
-                title: 'FAQs',
-                asset: 'assets/images/FAQs.png',
                 onTap: () {},
               ),
               const SizedBox(height: 10),
