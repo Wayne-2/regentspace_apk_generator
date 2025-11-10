@@ -1,62 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vtutemplate/constants.dart';
 import 'package:vtutemplate/services/servicesapi.dart';
 
-class ElectricityPage extends StatefulWidget {
-  const ElectricityPage({super.key});
+class ElectricityBillPage extends StatefulWidget {
+  const ElectricityBillPage({super.key});
 
   @override
-  State<ElectricityPage> createState() => _ElectricityPageState();
+  State<ElectricityBillPage> createState() => _ElectricityBillPageState();
 }
 
-class _ElectricityPageState extends State<ElectricityPage> {
-  final vtuService = VtuService();
-  final _meterController = TextEditingController();
-  final _amountController = TextEditingController();
+class _ElectricityBillPageState extends State<ElectricityBillPage> {
+  final _vtuService = VtuService();
+  final TextEditingController meterNumberController = TextEditingController();
+  final TextEditingController amountController = TextEditingController();
 
-  String selectedDisco = "Ikeja Electric";
-  String selectedMeterType = "Prepaid";
+  String selectedDisco = "ikeja-electric";
+  String selectedMeterType = "prepaid";
   bool isLoading = false;
   String result = "";
 
-  final List<String> discos = [
-    "Ikeja Electric",
-    "Eko Electric",
-    "Abuja Electric",
-    "Kano Electric",
-    "Ibadan Electric",
+  final List<Map<String, String>> discos = [
+    {"name": "Ikeja Electric", "code": "ikeja-electric"},
+    {"name": "Eko Electric", "code": "eko-electric"},
+    {"name": "Abuja Electric", "code": "abuja-electric"},
+    {"name": "Kano Electric", "code": "kano-electric"},
+    {"name": "Port Harcourt Electric", "code": "portharcourt-electric"},
   ];
 
-  final List<String> meterTypes = ["Prepaid", "Postpaid"];
-
-  Future<void> _payElectricityBill() async {
-    setState(() => isLoading = true);
-    try {
-      final res = await vtuService.payElectricityBill(
-        disco: selectedDisco,
-        meterNumber: _meterController.text,
-        meterType: selectedMeterType,
-        amount: double.parse(_amountController.text),
+  Future<void> payBill() async {
+    if (meterNumberController.text.isEmpty || amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields")),
       );
-      setState(() => result = " Success: ${res['message'] ?? 'Bill paid successfully!'}");
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final response = await _vtuService.payElectricityBill(
+        disco: selectedDisco,
+        meterNumber: meterNumberController.text,
+        amount: double.parse(amountController.text),
+        meterType: selectedMeterType,
+      );
+
+      setState(() {
+        isLoading = false;
+        result =
+            "✅ Success — ${response['content']['Customer_Name'] ?? 'Payment Complete!'}";
+      });
     } catch (e) {
-      setState(() => result = " Failed: $e");
-    } finally {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        result = "❌ Failed: $e";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = Colors.deepPurpleAccent;
+    final themeColor = CanvasConfig.bgColor;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: themeColor,
       appBar: AppBar(
-        backgroundColor: themeColor,
+        backgroundColor: const Color.fromARGB(76, 255, 255, 255),
+        automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: const Icon(Icons.arrow_back, size: 18),
+        ),
         title: Text(
           "Electricity Bill",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14),
         ),
         centerTitle: true,
         elevation: 0,
@@ -69,23 +87,27 @@ class _ElectricityPageState extends State<ElectricityPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                color: const Color.fromARGB(39, 255, 255, 255),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: Colors.grey.withOpacity(0.1),
                     blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
+                    offset: const Offset(0, 5),
+                  )
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Disco selection
-                  Text("Select Disco (Electric Company)",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  // 🔌 Disco Selection
+                  Text(
+                    "Select Disco",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -100,23 +122,33 @@ class _ElectricityPageState extends State<ElectricityPage> {
                         isExpanded: true,
                         onChanged: (v) => setState(() => selectedDisco = v!),
                         items: discos
-                            .map((d) => DropdownMenuItem(
-                                  value: d,
-                                  child: Text(d,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500)),
-                                ))
+                            .map(
+                              (d) => DropdownMenuItem(
+                                value: d["code"],
+                                child: Text(
+                                  d["name"]!,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  // Meter type
-                  Text("Meter Type",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  // ⚙️ Meter Type
+                  Text(
+                    "Meter Type",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -130,60 +162,71 @@ class _ElectricityPageState extends State<ElectricityPage> {
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
                         onChanged: (v) => setState(() => selectedMeterType = v!),
-                        items: meterTypes
-                            .map((t) => DropdownMenuItem(
-                                  value: t,
-                                  child: Text(t,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500)),
-                                ))
-                            .toList(),
+                        items: const [
+                          DropdownMenuItem(
+                              value: "prepaid", child: Text("Prepaid")),
+                          DropdownMenuItem(
+                              value: "postpaid", child: Text("Postpaid")),
+                        ],
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  // Meter number
-                  Text("Meter Number",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  // 🔢 Meter Number
+                  Text(
+                    "Meter Number",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _meterController,
+                    controller: meterNumberController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: "Enter your meter number",
+                      hintText: "Enter meter number",
                       hintStyle: GoogleFonts.poppins(fontSize: 14),
-                      prefixIcon: const Icon(Icons.electrical_services_outlined),
+                      prefixIcon: const Icon(Icons.numbers_outlined),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: const Color.fromARGB(68, 245, 245, 245),
                       contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  // Amount
-                  Text("Amount",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  // 💸 Amount
+                  Text(
+                    "Amount",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _amountController,
+                    controller: amountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: "Enter amount (₦)",
                       hintStyle: GoogleFonts.poppins(fontSize: 14),
                       prefixIcon: const Icon(Icons.money_outlined),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: const Color.fromARGB(68, 245, 245, 245),
                       contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -196,27 +239,28 @@ class _ElectricityPageState extends State<ElectricityPage> {
 
             const SizedBox(height: 30),
 
-            // 🟣 Pay Button
+            // ⚡ Pay Button
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeColor,
+                  backgroundColor: CanvasConfig.primaryAppTheme,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 4,
                 ),
-                onPressed: isLoading ? null : _payElectricityBill,
+                onPressed: isLoading ? null : payBill,
                 child: isLoading
                     ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.white))
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      )
                     : Text(
                         "Pay Bill",
                         style: GoogleFonts.poppins(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: Colors.white,
                         ),
                       ),
@@ -225,15 +269,17 @@ class _ElectricityPageState extends State<ElectricityPage> {
 
             const SizedBox(height: 25),
 
-            // 🟢 Result Feedback
+            // 🟢 Result
             if (result.isNotEmpty)
               AnimatedOpacity(
                 duration: const Duration(milliseconds: 400),
                 opacity: 1,
                 child: Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: result.contains("Success")
                         ? Colors.green.shade100

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 class CanvasConfig {
   static const Color appNameColor = Color.fromARGB(255, 0, 0, 0);
-  static const Color primaryAppTheme = Color.fromARGB(255, 68, 138, 255);
+  static const Color primaryAppTheme = Color.fromARGB(255, 239, 6, 6);
   static const Color iconThemeColor = Color.fromARGB(255, 255, 255, 255);
   static const Color bgColor = Color.fromARGB(255, 255, 215, 64);
   static const String selectedBgImagePath = 'assets/newbg.png';

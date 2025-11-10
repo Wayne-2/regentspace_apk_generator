@@ -1,254 +1,230 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:vtutemplate/constants.dart';
+import 'package:vtutemplate/model/datamodel.dart';
 import 'package:vtutemplate/services/servicesapi.dart';
 
-class DataPage extends StatefulWidget {
-  const DataPage({super.key});
+class BuyDataPage extends StatefulWidget {
+  final String serviceID; // e.g. "mtn-data", "airtel-data"
+  const BuyDataPage({super.key, required this.serviceID});
 
   @override
-  State<DataPage> createState() => _DataPageState();
+  State<BuyDataPage> createState() => _BuyDataPageState();
 }
 
-class _DataPageState extends State<DataPage> {
-  final _phoneController = TextEditingController();
-  final vtuService = VtuService();
-
-  String selectedNetwork = "MTN";
-  String selectedPlan = "MTN-1GB";
+class _BuyDataPageState extends State<BuyDataPage> {
+  final _vtuService = VtuService();
+  List<DataVariation> bundles = [];
+  DataVariation? selectedBundle;
   bool isLoading = false;
-  String result = "";
+  final TextEditingController phoneController = TextEditingController();
 
-  final List<String> networks = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
+  @override
+  void initState() {
+    super.initState();
+    loadBundles();
+  }
 
-  final Map<String, List<Map<String, String>>> plans = {
-    "MTN": [
-      {"name": "1GB - ₦300", "id": "MTN-1GB"},
-      {"name": "2GB - ₦500", "id": "MTN-2GB"},
-      {"name": "5GB - ₦1000", "id": "MTN-5GB"},
-    ],
-    "AIRTEL": [
-      {"name": "1GB - ₦300", "id": "AIRTEL-1GB"},
-      {"name": "2GB - ₦500", "id": "AIRTEL-2GB"},
-    ],
-    "GLO": [
-      {"name": "1GB - ₦250", "id": "GLO-1GB"},
-      {"name": "3GB - ₦700", "id": "GLO-3GB"},
-    ],
-    "9MOBILE": [
-      {"name": "1GB - ₦350", "id": "9MOBILE-1GB"},
-      {"name": "2GB - ₦600", "id": "9MOBILE-2GB"},
-    ],
-  };
+Future<void> loadBundles() async {
+  setState(() => isLoading = true);
 
-  Future<void> _buyData() async {
-    setState(() => isLoading = true);
+  try {
+    final List<DataVariation> result = await _vtuService.getDataBundles(widget.serviceID);
+
+    setState(() {
+      bundles = result;
+      isLoading = false;
+    });
+  } catch (e) {
+    setState(() => isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error loading bundles: $e')),
+    );
+  }
+}
+
+
+
+
+  void purchaseData() async {
+    if (selectedBundle == null || phoneController.text.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      final res = await vtuService.buyData(
-        network: selectedNetwork,
-        phone: _phoneController.text,
-        planId: selectedPlan,
+      final response = await _vtuService.buyData(
+        serviceID: widget.serviceID,
+        variationCode: selectedBundle!.variationCode,
+        phone: phoneController.text,
+        requestId: DateTime.now().millisecondsSinceEpoch.toString(),
       );
-      setState(() => result = "✅ Success: ${res['message'] ?? 'Data sent!'}");
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['response_description'] ?? 'Success')),
+      );
     } catch (e) {
-      setState(() => result = "❌ Failed: $e");
-    } finally {
-      setState(() => isLoading = false);
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Purchase failed: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = Colors.deepPurpleAccent;
-    final availablePlans = plans[selectedNetwork]!;
+        final themeColor = CanvasConfig.bgColor;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: themeColor,
       appBar: AppBar(
-        backgroundColor: themeColor,
+        elevation: 0,
+        backgroundColor: const Color.fromARGB(76, 255, 255, 255),
+        automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(Icons.arrow_back, size: 13),
+        ),
         title: Text(
-          "Buy Data",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          "${widget.serviceID.toUpperCase()} Data",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            fontSize: 13
+          ),
         ),
         centerTitle: true,
-        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-        child: Column(
-          children: [
-            // 🟣 Card Container
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Network
-                  Text("Select Network",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
-                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
+                      color: const Color.fromARGB(39, 255, 255, 255),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        )
+                      ],
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedNetwork,
-                        icon: const Icon(Icons.arrow_drop_down),
-                        isExpanded: true,
-                        onChanged: (v) {
-                          setState(() {
-                            selectedNetwork = v!;
-                            selectedPlan = plans[selectedNetwork]!.first['id']!;
-                          });
-                        },
-                        items: networks
-                            .map((n) => DropdownMenuItem(
-                                  value: n,
-                                  child: Text(n,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500)),
-                                ))
-                            .toList(),
-                      ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Phone Number",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            hintText: "Enter phone number",
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Select Data Plan",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border:
+                                Border.all(color: Colors.grey.shade300, width: 1),
+                          ),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          child: DropdownButton<DataVariation>(
+                          isExpanded: true,
+                          value: selectedBundle,
+                          underline: const SizedBox(),
+                          hint: const Text(
+                            "Choose your data plan",
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          items: bundles.map((bundle) {
+                            return DropdownMenuItem<DataVariation>(
+                              value: bundle,
+                              child: Text(
+                                "${bundle.name} - ₦${bundle.variationAmount.toStringAsFixed(0)}",
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedBundle = value;
+                            });
+                          },
+                        ),
+
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: purchaseData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: CanvasConfig.primaryAppTheme,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 4,
+                            ),
+                            child: const Text(
+                              "Buy Data",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Plan
-                  Text("Select Data Plan",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
+                  const SizedBox(height: 30),
+                  Text(
+                    "Ensure the phone number is correct before proceeding.",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedPlan,
-                        icon: const Icon(Icons.arrow_drop_down),
-                        isExpanded: true,
-                        onChanged: (v) => setState(() => selectedPlan = v!),
-                        items: availablePlans
-                            .map((plan) => DropdownMenuItem(
-                                  value: plan["id"],
-                                  child: Text(plan["name"]!,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500)),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Phone
-                  Text("Phone Number",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      hintText: "Enter recipient number",
-                      hintStyle: GoogleFonts.poppins(fontSize: 14),
-                      prefixIcon: const Icon(Icons.phone_android_outlined),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 30),
-
-            // 🟣 Buy Button
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 4,
-                ),
-                onPressed: isLoading ? null : _buyData,
-                child: isLoading
-                    ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.white))
-                    : Text(
-                        "Buy Data",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // Result Text
-            if (result.isNotEmpty)
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 400),
-                opacity: 1,
-                child: Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: result.contains("Success")
-                        ? Colors.green.shade100
-                        : Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    result,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: result.contains("Success")
-                          ? Colors.green.shade800
-                          : Colors.red.shade800,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

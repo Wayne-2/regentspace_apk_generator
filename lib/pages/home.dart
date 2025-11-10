@@ -1,14 +1,18 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vtutemplate/components/addmoney.dart';
 import 'package:vtutemplate/components/icontabs.dart';
+import 'package:vtutemplate/riverpod/riverpod.dart';
 import 'package:vtutemplate/utils/buyairtime.dart';
 import 'package:vtutemplate/utils/buydata.dart';
+import 'package:vtutemplate/utils/cabletvsub.dart';
 import 'package:vtutemplate/utils/electricalbill.dart';
 
-class Home extends StatelessWidget {
-  Home({
+class Home extends ConsumerStatefulWidget {
+  const Home({
     super.key,
     required this.primaryapptheme,
     required this.bgColor,
@@ -21,17 +25,32 @@ class Home extends StatelessWidget {
   final Color iconthemeColor;
   final String selectedBgImagePath;
 
+  @override
+  ConsumerState<Home> createState() => _HomeState();
+}
+
+class _HomeState extends ConsumerState<Home> {
+
   final List<String> images = ['assets/ads3.png', 'assets/ads4.png'];
+
+  unavailable() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Feature is unavailable")));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = ref.watch(userProfileProvider);
+    final displayName = userProfile?.username ?? "User";
+
     final screenHeight = MediaQuery.of(context).size.height;
     final size = MediaQuery.of(context).size; // Get device size
     final height = size.height;
     // final width = size.width;
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: widget.bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -51,44 +70,49 @@ class Home extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Hello, User',
+                        'Hello, $displayName',
                         style: GoogleFonts.poppins(fontSize: 12),
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.black, width: 1),
-                          color: primaryapptheme,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.add_circle,
-                              size: 14,
-                              color: iconthemeColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Add Money",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: iconthemeColor,
+                  GestureDetector(
+                    onTap: () {
+                      addMoneyDialog(context, onConfirm: (double amount, String method) {});
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.black, width: 1),
+                            color: widget.primaryapptheme,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.add_circle,
+                                size: 14,
+                                color: widget.iconthemeColor,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                "Add Money",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: widget.iconthemeColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.notifications_outlined, size: 18),
-                    ],
+                        const SizedBox(width: 10),
+                        const Icon(Icons.notifications_outlined, size: 18),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -102,7 +126,7 @@ class Home extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   image: DecorationImage(
-                    image: AssetImage(selectedBgImagePath),
+                    image: AssetImage(widget.selectedBgImagePath),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -127,8 +151,8 @@ class Home extends StatelessWidget {
                       Text(
                         "₦ 2,554,706",
                         style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: primaryapptheme,
+                          fontSize: 24,
+                          color: widget.primaryapptheme,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -204,9 +228,9 @@ class Home extends StatelessWidget {
                 children: [
                   Icontabs(
                     icon: Icons.phone_android,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Airtime',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
@@ -219,49 +243,61 @@ class Home extends StatelessWidget {
                   ),
                   Icontabs(
                     icon: Icons.wifi,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Data',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => DataPage()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const BuyDataPage(serviceID: "mtn-data"),
+                        ),
                       );
                     },
                   ),
                   Icontabs(
                     icon: Icons.bolt,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Electric',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ElectricityPage()),
+                        MaterialPageRoute(
+                          builder: (context) => ElectricityBillPage(),
+                        ),
                       );
                     },
                   ),
                   Icontabs(
                     icon: Icons.tv,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Cable',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TvSubscriptionPage(),
+                        ),
+                      );
+                    },
                   ),
                   Icontabs(
                     icon: Icons.sports_soccer,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Betting',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
@@ -269,33 +305,39 @@ class Home extends StatelessWidget {
                   ),
                   Icontabs(
                     icon: Icons.flight,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Flight',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
-                    onTap: () {},
+                    onTap: () {
+                      unavailable();
+                    },
                   ),
                   Icontabs(
                     icon: Icons.shopping_cart,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Shop',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
-                    onTap: () {},
+                    onTap: () {
+                      unavailable();
+                    },
                   ),
                   Icontabs(
                     icon: Icons.generating_tokens,
-                    color: iconthemeColor,
+                    color: widget.iconthemeColor,
                     label: 'Results',
-                    themecolor: primaryapptheme,
+                    themecolor: widget.primaryapptheme,
                     height: 36,
                     width: 36,
                     iconsize: 18,
-                    onTap: () {},
+                    onTap: () {
+                      unavailable();
+                    },
                   ),
                 ],
               ),

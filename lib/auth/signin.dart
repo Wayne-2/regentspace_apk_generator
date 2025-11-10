@@ -1,50 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vtutemplate/auth/createaccount.dart';
 import 'package:vtutemplate/components/navigator.dart';
 import 'package:vtutemplate/constants.dart';
+import 'package:vtutemplate/model/userdata.dart';
+import 'package:vtutemplate/riverpod/riverpod.dart';
 
-class SignInPage extends StatefulWidget {
+class SignInPage extends ConsumerStatefulWidget {
   const SignInPage({super.key});
 
   @override
-  State<SignInPage> createState() => _SignInPageState();
+  ConsumerState<SignInPage> createState() => _SignInPageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class _SignInPageState extends ConsumerState<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
   bool _isLoading = false;
 
-  Future<void> _signIn() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // simulate auth
-    setState(() => _isLoading = false);
+  final supabase = Supabase.instance.client;
 
-    // TODO: Replace with your real sign-in logic
+  Future<void> _signIn() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showMessage("Please enter email and password");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1️⃣ Sign in with Supabase
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      final user = response.user;
+      if (user == null) {
+        _showMessage("Invalid credentials");
+        return;
+      }
+
+      // 2️⃣ Fetch user profile from `user_profile` table
+      final profileResponse = await supabase
+          .from('user_profile')
+          .select()
+          .eq('user_id', user.id)
+          .single();
+
+      // if (profileResponse == null) {
+      //   _showMessage("Error fetching profile: No profile found");
+      //   return;
+      // }
+
+      // 3️⃣ Store in Riverpod for later use
+      final profile = UserProfile.fromMap(
+        profileResponse as Map<String, dynamic>,
+      );
+      ref.read(userProfileProvider.notifier).state = profile;
+
+      _showMessage("Signed in successfully!");
+
+      // 4️⃣ Navigate to Home / BottomNav
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BottomNav(
+            appNameColor: CanvasConfig.appNameColor,
+            primaryapptheme: CanvasConfig.primaryAppTheme,
+            iconthemeColor: CanvasConfig.iconThemeColor,
+            selectedBgImagePath: CanvasConfig.selectedBgImagePath,
+            bgColor: CanvasConfig.bgColor,
+          ),
+        ),
+      );
+    } on AuthException catch (e) {
+      print(e);
+      _showMessage(e.message);
+    } catch (e) {
+      print(e);
+      _showMessage("Unexpected error: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Signed in successfully!")));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BottomNav(
-          appNameColor: CanvasConfig.appNameColor,
-          primaryapptheme: CanvasConfig.primaryAppTheme,
-          iconthemeColor: CanvasConfig.iconThemeColor,
-          selectedBgImagePath: CanvasConfig.selectedBgImagePath,
-          bgColor: CanvasConfig.bgColor,
-        ),
-      ),
-    );
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: CanvasConfig.bgColor,
       body: SafeArea(
@@ -161,7 +212,9 @@ class _SignInPageState extends State<SignInPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: _isLoading ?  const Color.fromARGB(221, 82, 80, 80):CanvasConfig.primaryAppTheme,
+                      color: _isLoading
+                          ? const Color.fromARGB(221, 82, 80, 80)
+                          : CanvasConfig.primaryAppTheme,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(

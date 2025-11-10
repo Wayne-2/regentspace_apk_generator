@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vtutemplate/components/navigator.dart';
 import 'package:vtutemplate/constants.dart';
+import 'package:vtutemplate/model/userdata.dart';
+import 'package:vtutemplate/riverpod/riverpod.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -14,45 +18,96 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscure = true;
   bool _isLoading = false;
+
+  final supabase = Supabase.instance.client;
 
   Future<void> _createAccount() async {
     if (_emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+      _showMessage("Please fill all fields");
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // simulate sign-up
-    setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Account created successfully!")),
-    );
+    try {
+      final response = await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        data: {'username': _nameController.text.trim()},
+      );
 
-    Navigator.push(
+      final user = response.user;
+
+      if (user != null) {
+        // Insert into user_profile table
+        final insertResponse = await supabase
+            .from('user_profile')
+            .insert({
+              'user_id': user.id,
+              'username': _nameController.text.trim(),
+              'email': _emailController.text.trim(),
+              'password': ''
+            })
+            .select()
+            .single();
+
+        // Convert to UserProfile model
+        final userProfile = UserProfile.fromMap(insertResponse);
+
+        // Store in Riverpod
+        if (mounted) {
+          // if using ConsumerWidget context
+          final container = ProviderScope.containerOf(context);
+          container.read(userProfileProvider.notifier).setUser(userProfile);
+        }
+
+        _showMessage("Account created successfully!");
+
+        // Navigate to home
+        Future.delayed(const Duration(milliseconds: 700), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BottomNav(
+                appNameColor: CanvasConfig.appNameColor,
+                primaryapptheme: CanvasConfig.primaryAppTheme,
+                iconthemeColor: CanvasConfig.iconThemeColor,
+                selectedBgImagePath: CanvasConfig.selectedBgImagePath,
+                bgColor: CanvasConfig.bgColor,
+              ),
+            ),
+          );
+        });
+      }
+    } on AuthException catch (e) {
+      print(e);
+      _showMessage(e.message);
+    } on PostgrestException catch (e) {
+      print(e);
+      _showMessage("Database error: ${e.message}");
+    } catch (e) {
+      print(e);
+      _showMessage("Unexpected error: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
       context,
-      MaterialPageRoute(
-        builder: (context) => BottomNav(
-          appNameColor: CanvasConfig.appNameColor,
-          primaryapptheme: CanvasConfig.primaryAppTheme,
-          iconthemeColor: CanvasConfig.iconThemeColor,
-          selectedBgImagePath: CanvasConfig.selectedBgImagePath,
-          bgColor: CanvasConfig.bgColor,
-        ),
-      ),
-    );
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: CanvasConfig.bgColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -78,95 +133,45 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 ),
                 const SizedBox(height: 40),
 
-                // Name Input
+                // Full Name
                 TextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    hintText: "Full name",
-                    prefixIcon: const Icon(Icons.person_outline),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.black87),
-                    ),
+                  decoration: _inputDecoration(
+                    "Full name",
+                    Icons.person_outline,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Email Input
+                // Email
                 TextField(
                   controller: _emailController,
-                  decoration: InputDecoration(
-                    hintText: "Email address",
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.black87),
-                    ),
+                  decoration: _inputDecoration(
+                    "Email address",
+                    Icons.email_outlined,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Password Input
+                // Password
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscure,
-                  decoration: InputDecoration(
-                    hintText: "Password",
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
+                  decoration: _inputDecoration("Password", Icons.lock_outline)
+                      .copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure = !_obscure),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.black87),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 30),
 
-                // Sign-Up Button
+                // Create Button
                 GestureDetector(
                   onTap: _isLoading ? null : _createAccount,
                   child: AnimatedContainer(
@@ -174,16 +179,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color:
-                          _isLoading ? Colors.black45 : Colors.black87,
+                      color: _isLoading
+                          ? Colors.black45
+                          : CanvasConfig.primaryAppTheme,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: Center(
                       child: _isLoading
@@ -208,7 +207,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 ),
                 const SizedBox(height: 30),
 
-                // Go to Sign In
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -217,9 +215,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       style: GoogleFonts.poppins(color: Colors.grey[700]),
                     ),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // back to sign in
-                      },
+                      onPressed: () => Navigator.pop(context),
                       child: Text(
                         "Sign In",
                         style: GoogleFonts.poppins(
@@ -234,6 +230,28 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.black87),
       ),
     );
   }

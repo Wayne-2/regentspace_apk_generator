@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vtutemplate/constants.dart';
 import 'package:vtutemplate/services/servicesapi.dart';
 
 class AirtimePage extends StatefulWidget {
@@ -26,9 +27,11 @@ class _AirtimePageState extends State<AirtimePage> {
         phone: _phoneController.text,
         amount: double.parse(_amountController.text),
       );
-      setState(() => result = "✅ Success: ${res['message'] ?? 'Airtime sent!'}");
+      setState(
+        () => result = "Success: ${res['message'] ?? 'Airtime sent!'}",
+      );
     } catch (e) {
-      setState(() => result = "❌ Failed: $e");
+      setState(() => result = "Failed: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -36,15 +39,22 @@ class _AirtimePageState extends State<AirtimePage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = Colors.deepPurpleAccent;
+    final themeColor = CanvasConfig.bgColor;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: themeColor,
       appBar: AppBar(
-        backgroundColor: themeColor,
+        backgroundColor: const Color.fromARGB(76, 255, 255, 255),
+        automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(Icons.arrow_back, size: 13),
+        ),
         title: Text(
           "Buy Airtime",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w400, fontSize: 14),
         ),
         centerTitle: true,
         elevation: 0,
@@ -53,26 +63,30 @@ class _AirtimePageState extends State<AirtimePage> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
           children: [
-            // 🟣 Card Container
+            //Card Container
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: const Color.fromARGB(39, 255, 255, 255),
+                borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        )
+                      ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Select Network",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  Text(
+                    "Select Network",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -86,35 +100,46 @@ class _AirtimePageState extends State<AirtimePage> {
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
                         onChanged: (v) => setState(() => selectedNetwork = v!),
-                        items: ["MTN", "AIRTEL", "GLO", "9MOBILE"]
-                            .map((n) => DropdownMenuItem(
-                                  value: n,
-                                  child: Text(n,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500)),
-                                ))
+                        items: ["MTN", "Airtel", "GLO", "9Mobile"]
+                            .map(
+                              (n) => DropdownMenuItem(
+                                value: n,
+                                child: Text(
+                                  n,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  Text("Phone Number",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  Text(
+                    "Phone Number",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
-                      hintText: "Enter recipient number",
+                      hintText: "Enter phone number",
                       hintStyle: GoogleFonts.poppins(fontSize: 14),
                       prefixIcon: const Icon(Icons.phone_android_outlined),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: const Color.fromARGB(68, 245, 245, 245),
                       contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -123,9 +148,13 @@ class _AirtimePageState extends State<AirtimePage> {
                   ),
                   const SizedBox(height: 20),
 
-                  Text("Amount",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  Text(
+                    "Amount",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _amountController,
@@ -135,9 +164,11 @@ class _AirtimePageState extends State<AirtimePage> {
                       hintStyle: GoogleFonts.poppins(fontSize: 14),
                       prefixIcon: const Icon(Icons.money_outlined),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: const Color.fromARGB(68, 245, 245, 245),
                       contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -150,13 +181,12 @@ class _AirtimePageState extends State<AirtimePage> {
 
             const SizedBox(height: 30),
 
-            // 🟣 Buy Button
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeColor,
+                  backgroundColor: CanvasConfig.primaryAppTheme,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -165,12 +195,13 @@ class _AirtimePageState extends State<AirtimePage> {
                 onPressed: isLoading ? null : _buyAirtime,
                 child: isLoading
                     ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.white))
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      )
                     : Text(
                         "Buy Airtime",
                         style: GoogleFonts.poppins(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: Colors.white,
                         ),
                       ),
@@ -186,8 +217,10 @@ class _AirtimePageState extends State<AirtimePage> {
                 opacity: 1,
                 child: Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: result.contains("Success")
                         ? Colors.green.shade100

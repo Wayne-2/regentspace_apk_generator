@@ -1,12 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vtutemplate/auth/signin.dart';
-import 'package:vtutemplate/components/navigator.dart';
 import 'package:vtutemplate/constants.dart';
 
-void main() {
+Future<void> main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+    await Supabase.initialize(
+    url: 'https://zzquqfjainyvsmiaolgq.supabase.co',
+    anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cXVxZmphaW55dnNtaWFvbGdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MjQ3MTksImV4cCI6MjA3ODMwMDcxOX0.dBfaY1kWTo_gZtMH0VRMT9MWZQHE5-nwkqcpal_-MhI',
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
+    realtimeClientOptions: const RealtimeClientOptions(
+      logLevel: RealtimeLogLevel.info,
+    ),
+    storageOptions: const StorageClientOptions(
+      retryAttempts: 10,
+    ),
+  );
   runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: LoadingPage()),
+    const ProviderScope(child: MaterialApp(debugShowCheckedModeBanner: false, home: LoadingPage())),
   );
 }
 

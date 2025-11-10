@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vtutemplate/components/usageinfo.dart';
-
-class Finances extends StatelessWidget {
-  const Finances({super.key, required this.primaryapptheme,required this.bgColor,});
+import 'package:vtutemplate/riverpod/riverpod.dart';
+class Finances extends ConsumerWidget {
+  const Finances({super.key, required this.primaryapptheme, required this.bgColor,});
 
   final Color primaryapptheme;
   final Color bgColor;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    final userProfile = ref.watch(userProfileProvider);
+    final displayName = userProfile?.username ?? "User";
     final size = MediaQuery.of(context).size;
     final height = size.height;
     // final width = size.width;
@@ -37,16 +41,16 @@ class Finances extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Text(
-                          'Solomon',
-                          style: TextStyle(
+                          displayName,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'Prepaid - 5235829243',
                           style: TextStyle(
                             fontSize: 11,
