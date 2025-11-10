@@ -58,9 +58,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 
       // 3️⃣ Store in Riverpod for later use
       final profile = UserProfile.fromMap(
-        profileResponse as Map<String, dynamic>,
+        profileResponse,
       );
-      ref.read(userProfileProvider.notifier).state = profile;
+      (ref.read(userProfileProvider.notifier) as dynamic).state = profile;
 
       _showMessage("Signed in successfully!");
 

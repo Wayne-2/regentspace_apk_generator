@@ -9,7 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Required for pushing tags and creating releases
     permissions:
       contents: write
       actions: read
@@ -29,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # ✅ Create the .env file securely from GitHub Secret
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      # (Optional) Verify that the .env file exists
+      - name: Verify .env file
+        run: cat .env
+
       # Build release APK
       - name: Build release APK
         run: flutter build apk --release
@@ -44,12 +51,9 @@ jobs:
       - name: Get next release tag
         id: tag
         run: |
-          # Fetch all tags
           git fetch --tags
-          # Get latest tag, default to v0 if none
           latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0")
           echo "Latest tag: $latest_tag"
-          # Extract numeric part and increment
           latest_num=${latest_tag#v}
           next_num=$((latest_num + 1))
           next_tag="v${next_num}"
