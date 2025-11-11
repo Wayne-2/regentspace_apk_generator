@@ -46,6 +46,7 @@ class _BottomNavState extends State<BottomNav> {
     financesPage = Finances(
       primaryapptheme: widget.primaryapptheme,
       bgColor: widget.bgColor,
+      iconColor: widget.iconthemeColor,
     );
     settingsPage = Settings(
       primaryapptheme: widget.primaryapptheme,

@@ -58,7 +58,7 @@ Future<void> loadBundles() async {
         serviceID: widget.serviceID,
         variationCode: selectedBundle!.variationCode,
         phone: phoneController.text,
-        requestId: DateTime.now().millisecondsSinceEpoch.toString(),
+        requestId: DateTime.now().millisecondsSinceEpoch.toString()
       );
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

@@ -9,31 +9,28 @@ class VtuService {
   final String secretKey = dotenv.env['SECRET_KEY'] ?? '';
   final String publicKey = dotenv.env['PUBLIC_KEY'] ?? '';
 
-Future<Map<String, dynamic>> buyAirtime({
+  Future<Map<String, dynamic>> buyAirtime({
     required String network,
     required String phone,
     required double amount,
   }) async {
     final url = Uri.parse("$baseUrl/pay");
 
-    final headers = {
-      "api-key": apiKey,
-      "secret-key": secretKey,
-      "Content-Type": "application/json",
-    };
-
     final body = jsonEncode({
       "request_id": DateTime.now().millisecondsSinceEpoch.toString(),
-      "serviceID": network, 
+      "serviceID": network,
       "amount": amount,
       "phone": phone,
     });
 
     final response = await http.post(url, headers: headers, body: body);
 
+    print("POST $url");
+    print("Body: $body");
+    print("Response: ${response.body}");
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-
       if (data["code"] == "000") {
         return data;
       } else {
@@ -43,6 +40,7 @@ Future<Map<String, dynamic>> buyAirtime({
       throw Exception("Server error: ${response.statusCode}");
     }
   }
+
 Map<String, String> get headers => {
         "Content-Type": "application/json",
         "api-key": apiKey,
@@ -50,53 +48,75 @@ Map<String, String> get headers => {
       };
 
 Future<List<DataVariation>> getDataBundles(String serviceID) async {
-  final response = await http.get(
-    Uri.parse("$baseUrl/service-variations?serviceID=$serviceID"),
-    headers: headers,
-  );
+    final response = await http.get(
+      Uri.parse("$baseUrl/service-variations?serviceID=$serviceID"),
+      headers: headers,
+    );
 
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
 
-    if (data["code"] == "000" && data["content"]?["variations"] != null) {
-      final List variations = data["content"]["variations"];
-      return variations.map((e) => DataVariation.fromJson(e)).toList();
+      // VTpass sometimes returns 'code' or 'response_description'
+      if ((data["code"] == "000" || data["response_description"] != null) &&
+          data["content"]?["variations"] != null) {
+        final List variations = data["content"]["variations"];
+        return variations
+            .map((e) => DataVariation.fromJson(e))
+            .toList();
+      } else {
+        throw Exception("No variations found or invalid response format");
+      }
     } else {
-      throw Exception("Invalid response format or no variations found");
+      throw Exception("Failed to fetch bundles: ${response.body}");
     }
-  } else {
-    throw Exception("Failed to fetch bundles: ${response.body}");
   }
-}
 
-  /// Purchase data
+  /// Purchase MTN data
   Future<Map<String, dynamic>> buyData({
     required String serviceID,
     required String variationCode,
     required String phone,
     required String requestId,
   }) async {
-    final body = jsonEncode({
+    final payload = jsonEncode({
       "request_id": requestId,
       "serviceID": serviceID,
       "billersCode": phone,
       "variation_code": variationCode,
-      "amount": "0", // VTU handles amount from variation
-      "phone": phone,
     });
 
     final response = await http.post(
       Uri.parse("$baseUrl/pay"),
       headers: headers,
-      body: body,
+      body: payload,
     );
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception("Data purchase failed");
+      throw Exception(
+          "Data purchase failed: ${response.statusCode} ${response.body}");
     }
   }
+
+  /// Query transaction status
+  Future<Map<String, dynamic>> queryTransaction(String requestId) async {
+    final payload = jsonEncode({"request_id": requestId});
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/requery"),
+      headers: headers,
+      body: payload,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception(
+          "Transaction query failed: ${response.statusCode} ${response.body}");
+    }
+  }
+
   Future<Map<String, dynamic>> payElectricityBill({
     required String disco,   
     required String meterNumber, 

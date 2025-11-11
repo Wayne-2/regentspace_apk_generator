@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vtutemplate/components/usageinfo.dart';
 import 'package:vtutemplate/riverpod/riverpod.dart';
+
 class Finances extends ConsumerWidget {
-  const Finances({super.key, required this.primaryapptheme, required this.bgColor,});
+  const Finances({
+    super.key,
+    required this.primaryapptheme,
+    required this.bgColor,
+    required this.iconColor,
+  });
 
   final Color primaryapptheme;
   final Color bgColor;
-
+  final Color iconColor;
+  
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final userProfile = ref.watch(userProfileProvider);
     final displayName = userProfile?.username ?? "User";
     final size = MediaQuery.of(context).size;
@@ -33,8 +39,10 @@ class Finances extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(10),
                   color: primaryapptheme,
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -44,18 +52,20 @@ class Finances extends ConsumerWidget {
                       children: [
                         Text(
                           displayName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: iconColor,
+                            // color: Colors.black,
                           ),
                         ),
-                        const Text(
+                         Text(
                           'Prepaid - 5235829243',
                           style: TextStyle(
+                            color: iconColor,
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            // color: Colors.black87,
                           ),
                         ),
                       ],
@@ -107,10 +117,7 @@ class Finances extends ConsumerWidget {
               /// --- Section Title ---
               const Text(
                 "Recent Transactions",
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 8),
@@ -129,8 +136,9 @@ class Finances extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                              Border.all(color: Colors.black12.withOpacity(0.3)),
+                          border: Border.all(
+                            color: Colors.black12.withOpacity(0.3),
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -149,7 +157,10 @@ class Finances extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(6),
                                 color: Colors.grey[200],
                               ),
-                              child: const Icon(Icons.wallet_outlined, size: 16),
+                              child: const Icon(
+                                Icons.wallet_outlined,
+                                size: 16,
+                              ),
                             ),
                             const SizedBox(width: 10),
 
